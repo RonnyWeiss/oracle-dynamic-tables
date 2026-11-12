@@ -1554,39 +1554,53 @@ CREATE OR REPLACE package body pkg_table_diff as
             l_script := l_script || l_line || chr(10);
         end loop;
         --
-        l_script := l_script || ');' || chr(10);
-        --
-        -- PK
+        -- Build PK column list (once, for both IOT and HEAP)
+        l_pk_columns_sql varchar2(32767) := '';
         if p_json_object.has('primary_key') then
             declare
-                l_pk            sys.json_object_t := p_json_object.get_object('primary_key');
-                l_pk_columns    sys.json_array_t  := l_pk.get_array('columns');
-                l_str           varchar2(32767)   := '';
+                l_pk           sys.json_object_t := p_json_object.get_object('primary_key');
+                l_pk_columns   sys.json_array_t  := l_pk.get_array('columns');
             begin
                 for i in 0..l_pk_columns.get_size - 1 loop
                     if i > 0 then
-                        l_str := l_str || ', ';
+                        l_pk_columns_sql := l_pk_columns_sql || ', ';
                     end if;
-                    l_str := l_str || safe_identifier(
+                    l_pk_columns_sql := l_pk_columns_sql || safe_identifier(
                         p_name => l_pk_columns.get_string(i),
                         p_kind => 'primary key column name'
                     );
                 end loop;
-
+            end;
+        end if;
+        --
+        if l_org = 'INDEX' then
+            -- IOT: PK must be defined inline in CREATE TABLE statement
+            if l_pk_columns_sql is not null then
+                l_script := l_script || ',' || chr(10) || '  constraint ' ||
+                        safe_identifier(
+                            p_name => p_json_object.get_string('primary_key').get_string('name'),
+                            p_kind => 'primary key constraint name'
+                        ) ||
+                        ' primary key (' || l_pk_columns_sql || ');' || chr(10);
+            end if;
+            l_script := l_script || ');' || chr(10);
+        else
+            -- HEAP: PK added via separate ALTER TABLE statement
+            l_script := l_script || ');' || chr(10);
+            if l_pk_columns_sql is not null then
                 l_script := l_script ||
                         'alter table ' ||
                         l_table ||
                         ' add constraint ' ||
                         safe_identifier(
-                            p_name => l_pk.get_string('name'),
+                            p_name => p_json_object.get_string('primary_key').get_string('name'),
                             p_kind => 'primary key constraint name'
                         ) ||
                         ' primary key (' ||
-                        l_str ||
+                        l_pk_columns_sql ||
                         ');' ||
                         chr(10);
-
-            end;
+            end if;
         end if;
         --
         -- UCs
@@ -2764,7 +2778,9 @@ CREATE OR REPLACE package body pkg_table_diff as
             declare
                 l_pk sys.json_object_t := p_json_object.get_object('primary_key');
             begin
+                -- Drop existing PK before adding a new one (HEAP and IOT, when PK name or columns change)
                 if coalesce(get_current_pk_sig(p_name => l_pk.get_string('name')), '#NULL#') != get_target_pk_sig(p_pk => l_pk) then
+                    l_script := l_script || 'alter table ' || l_table || ' drop primary key;' || chr(10);
                     l_script := l_script || get_pk_add_sql(p_pk => l_pk);
                 end if;
             end;
@@ -2914,3 +2930,4 @@ CREATE OR REPLACE package body pkg_table_diff as
 
 end pkg_table_diff;
 /
+

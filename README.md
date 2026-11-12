@@ -245,9 +245,15 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
+
+## Known Limitations
+
+### Table Rebuild (Organization Change)
+When changing the table organization (HEAP $\leftrightarrow$ INDEX), the package generates a rebuild script that creates a _NEW temporary table, copies all rows, drops the original, and renames. This sequence requires **single-session execution** — concurrent apply attempts on the same table will conflict during the rename step.
+
 ## Development Process
 
-This repository was built with local AI assistance using **Ollama** and **Qwen3.6**. 
+This repository was built with local AI assistance using **Ollama**.
 
 The process follows a **"Senior Vibe Engineer"** workflow:
 - Code generation is step-by-step and context-aware.

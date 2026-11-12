@@ -59,4 +59,4 @@ ON DELETE), and standalone indexes.
 
 ## Git Workflow
 
-Every change should be committed in git. Keep code, security audit, and documentation updates together in the same commit.
+Keep code, security audit, and documentation updates together in the same commit.
