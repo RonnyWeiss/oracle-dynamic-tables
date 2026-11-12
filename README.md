@@ -239,4 +239,3 @@ Copyright (c) 2026 Ronny Weiss
 See [LICENSE](LICENSE) for details.
 
 ---
-
