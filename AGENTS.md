@@ -1,12 +1,12 @@
 ﻿# Agent Instructions
 
-Use the custom local skill at:
+Use the custom local skills at:
 
-`.agents/skills/plsql-professional-developer/SKILL.md`
+- `.agents/skills/plsql-developer/SKILL.md` — primary coding skill
+- `.agents/skills/plsql-security-auditor/SKILL.md` — security audit skill  
+- `.agents/skills/plsql-doc-writer/SKILL.md` — documentation skill
 
-Apply this skill for Oracle SQL and PL/SQL work, including package, procedure,
-function, trigger, script, query, review, formatting, commenting, and security
-tasks.
+Apply these skills for Oracle SQL and PL/SQL work on `pkg_table_diff`.
 
 ## Project Overview
 
@@ -16,14 +16,24 @@ metadata from the current schema as JSON, compares a target JSON table definitio
 with the existing database table, and generates CREATE TABLE or ALTER TABLE DDL
 to create or synchronize the table structure.
 
+**Source**: `PKG_TABLE_DIFF.sql` (single file: ~2700 lines, package spec + body)
+
+## Available Agent Skills
+
+| Skill | Path | Use When... |
+|---|---|---|
+| **plsql-developer** | `.agents/skills/plsql-developer/SKILL.md` | Creating, refactoring, debugging, or formatting code. The default skill for all coding work. |
+| **plsql-security-auditor** | `.agents/skills/plsql-security-auditor/SKILL.md` | Scanning for SQL injection, privilege gaps, bind variable usage, input validation. Runs as a targeted audit before releases. |
+| **plsql-doc-writer** | `.agents/skills/plsql-doc-writer/SKILL.md` | Generating API reference, JSON schema docs, inline header comments, README updates, CHANGELOG entries. |
+
 ## Public API
 
-| API Method | Purpose |
-|---|---|
-| `export_table_json(p_table_name, p_as_clob_expression)` | Exports one table metadata as formatted JSON or as a PL/SQL diff block (CLOB). The lookup is case-insensitive against USER_TABLES. |
-| `export_table_diff_block(p_table_like)` | Generates an anonymous PL/SQL block for **all** tables matching a SQL LIKE pattern (USER_TABLES.TABLE_NAME). The returned block contains constants per table and calls generate_table_diff for each. |
-| `generate_table_diff(p_target_json, p_apply, p_drop_columns, p_print_diff_script, p_skip_errors)` | Core diff engine. Takes target JSON, generates CREATE or ALTER DDL, optionally applies it, returns the script as CLOB. |
-| `apply_table_diff(p_target_json, p_drop_columns, p_print_diff_script, p_skip_errors)` | Convenience wrapper: calls generate_table_diff then executes returned DDL via EXECUTE IMMEDIATE. Parses SQL statements from CLOB (handles strings, quotes, comments). |
+| API Method | Purpose | Doc Skill |
+|---|---|---|
+| `export_table_json(p_table_name, p_as_clob_expression)` | Exports one table metadata as formatted JSON or as a PL/SQL diff block (CLOB). | ✅ Required |
+| `export_table_diff_block(p_table_like)` | Generates an anonymous PL/SQL block for **all** tables matching a SQL LIKE pattern (USER_TABLES.TABLE_NAME). | ✅ Required |
+| `generate_table_diff(p_target_json, p_apply, p_drop_columns, p_print_diff_script, p_skip_errors)` | Core diff engine. Takes target JSON, generates CREATE or ALTER DDL, optionally applies it, returns the script as CLOB. | ✅ Required |
+| `apply_table_diff(p_target_json, p_drop_columns, p_print_diff_script, p_skip_errors)` | Convenience wrapper: calls generate_table_diff then executes returned DDL via EXECUTE IMMEDIATE. Parses SQL statements from CLOB (handles strings, quotes, comments). | ✅ Required |
 
 ## JSON Schema
 
@@ -41,6 +51,12 @@ ON DELETE), and standalone indexes.
 - **Defaults & check conditions**: Treated as SQL fragments; comments outside string literals are ignored, semicolons outside literals/comments rejected.
 - **p_table_like**: Uses standard SQL LIKE semantics against USER_TABLES.TABLE_NAME.
 
+## Recommended Workflow
+
+1. **Code changes** → use `plsql-developer` skill. Always read full PKG_TABLE_DIFF.sql first.
+2. **Pre-release audit** → run `plsql-security-auditor` on the modified file.
+3. **Documentation updates** → use `plsql-doc-writer` for any README, API reference, or inline comment changes.
+
 ## Git Workflow
 
-Every change should be committed in git.
+Every change should be committed in git. Keep code, security audit, and documentation updates together in the same commit.
