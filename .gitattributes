@@ -1,2 +1,6 @@
-# Auto detect text files and perform LF normalization
+﻿# Explicitly mark SQL and PL/SQL files as text with Unix line endings (LF)
+# This ensures consistency when scripts are executed on Linux Oracle instances from Windows developers
+*.sql   text eol=lf
+
+# Auto-detect all other files (Markdown, etc.)
 * text=auto
