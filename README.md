@@ -242,11 +242,14 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
+
+---
+
 ## Development Process
 
 This repository was built with local AI assistance using **Ollama** and **Qwen3.6**. 
 
 The process follows a **"Senior Vibe Engineer"** workflow:
-- Code generation is step-by-step and conte`t-aware.
+- Code generation is step-by-step and context-aware.
 - Every line of code is manually reviewed by the author before merging.
 - No "raw" LLM dumps — strict adherence to Oracle best practices and project security standards.
